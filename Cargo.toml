@@ -1,0 +1,10 @@
+[package]
+name = "prescience"
+version = "0.0.1"
+authors = ["Joseph Re <overture2112@gmail.com>"]
+keywords = ["prescience","tactical rpg","time travel"]
+description = "Turn based tactical rpg with time travel mechanic"
+
+[dependencies]
+time = "*"
+rand = "*"
