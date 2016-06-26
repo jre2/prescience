@@ -1,17 +1,24 @@
 #![allow(dead_code)]
 
-use std;
-use itertools::Itertools;
+// sibling implementation modules
+mod render;
+pub use self::render::*;
+
+mod ons;
+pub use self::ons::*;
+
+// other modules
 
 pub type UnitId = u8;
 pub type TeamId = u8; // starting from 1
 pub type RowId = u8;
+pub type Stat = u8;
 
 #[derive(Debug)]
 pub struct State {
-    units : Vec<Unit>,      // unit.id = index in units array
+    units   : Vec<Unit>,    // unit.id = index in units array
     effects : Vec<Effect>,  // sorted by unit they belong to
-    eindex : Vec<usize>,    // eindex[unit.id] stores index of unit's first effect
+    eindex  : Vec<usize>,   // eindex[unit.id] stores index of unit's first effect
 
     pub turn    : u32,      // unit turn count. occurs any time a unit gets 100ct
     pub round   : u32,      // absolute turn count. occurs every absolute 100ct
@@ -24,29 +31,29 @@ pub struct State {
 #[derive(Debug)]
 #[derive(Clone)]
 pub struct Unit {
-    pub id : UnitId,
-    team : TeamId,
-    row : RowId,
-    pub is_alive : bool,
-    pub stats : UnitStats,
+    pub id          : UnitId,
+    team            : TeamId,
+    row             : RowId,
+    pub is_alive    : bool,
+    pub stats       : UnitStats,
 }
 #[derive(Debug)]
 #[derive(Clone)]
 pub struct UnitStats {
-    pub ct : u8,
-    spd : u8,
-    pub hp : u8,
-    atk : u8,
-    heal : u8,
+    pub ct  : u8,
+    spd     : u8,
+    pub hp  : u8,
+    atk     : u8,
+    heal    : u8,
 }
 
 // Eventually try replacing with u16-32 and manual bitshifting
 #[derive(Debug)]
 struct Effect {
-    etype : u8,     // support upto 256 effect types (planning only 64)
-    ttl : u8,       // duration in rounds; 0-14 with 15 => inf
-    potency : i8,   // SMT/pokemon style "stages"; +/- 5
-    linked : UnitId,// unit id (and thus index). ideally larger later
+    etype   : u8,       // support upto 256 effect types (planning only 64)
+    ttl     : u8,       // duration in rounds; 0-14 with 15 => inf
+    potency : i8,       // SMT/pokemon style "stages"; +/- 5
+    linked  : UnitId,   // unit id (and thus index). ideally larger later
 }
 
 impl UnitStats {
@@ -57,12 +64,6 @@ impl UnitStats {
 impl Effect {
     fn new() -> Effect {
         Effect { etype : 0, ttl : 0, potency : 0, linked : 0 }
-    }
-}
-impl std::fmt::Display for Unit {
-    fn fmt( &self, f: &mut std::fmt::Formatter ) -> std::fmt::Result {
-        if !self.is_alive { write!( f, "<DEAD>" ) }
-        else { write!( f, "<{}% {} ({})>", self.stats.hp, self.stats.ct, self.id ) }
     }
 }
 impl Unit {
@@ -77,19 +78,6 @@ impl Unit {
         u.is_alive = true;
         u.stats.ct = id;
         u
-    }
-    fn on_death( &mut self ) {
-        self.is_alive = false;
-        //TODO: remove all effects attached to this unit
-    }
-    fn on_damaged( &mut self, dmg : u8 ) {
-        self.stats.hp -= dmg;
-        if self.stats.hp <= 0 { self.on_death(); }
-    }
-    fn update( &mut self ) {
-        if self.is_alive {
-            self.stats.ct += self.stats.spd
-        }
     }
 }
 impl State {
@@ -111,52 +99,32 @@ impl State {
         self.units.push( u );
         self
     }
-    pub fn mk_test() -> State {
+    pub fn mk_test( teams : TeamId, rows : RowId, row_size_mult : f32) -> State {
         let mut st = State::new();
 
         let mut row_size;
-        for team in 1..2+1 {
+        for team in 1..teams+1 {
             row_size = 1.0_f32;
-            for row in (1..4+1).rev() {
+            for row in (1..rows+1).rev() {
                 for _ in 0..(row_size as i32) {
                     st.add_unit( team, row );
                 }
-                row_size = (1.5 * row_size).ceil();
+                row_size = (row_size_mult * row_size).ceil();
             }
         }
         st
     }
-    pub fn render_team( & self, team : TeamId, rev : bool ) {
-        let rows1 = self.units.iter().filter(|u| u.team==team).map(|u| u.row).unique();
-        let rows = if rev { rows1.sorted() } else { rows1.sorted_by(|a,b| b.cmp(a)) };
-        for row in rows {
-            let us = self.units.iter().filter(|u| u.team==team && u.row==row);
-            let s = us.map(|u| u.to_string() ).join(" ");
-            println!("Row {}:{}",row,s);
+}
+
+// Update and turn processing functions
+impl Unit {
+    fn update( &mut self ) {
+        if self.is_alive {
+            self.stats.ct += self.stats.spd
         }
     }
-    pub fn render( & self ) {
-        let teams = self.units.iter().map(|u| u.team).unique().sorted();
-
-        // Render battlefield
-        let mut rev = false;
-        for t in teams.iter() {
-            println!( "{:-^80}", format!(" Team {} ",t) );
-            self.render_team( *t as TeamId, rev );
-            rev = !rev;
-        }
-
-        // Render health summary
-        let s = teams.iter().map(|&t|
-            format!("Test {}",
-                self.units.iter().filter(|u| u.team==t && u.is_alive )
-                .map(|u| u.stats.hp as i32).sum::<i32>()
-                )
-            )
-            .join(" ");
-        println!("\nTurn {} Round {} CT {}. {}", self.turn, self.round, self.ct, s);
-    }
-
+}
+impl State {
     // run one game tick (a sub-turn/round unit of time).
     // mostly determines when rounds/turns occur
     fn update( &mut self ) {
@@ -190,10 +158,7 @@ impl State {
             None => { return; },
             Some(u) => &mut *( u as *mut Unit ),
         } };
-        self.do_turn_unit( u );
+        u.on_turn( self );
         self.turn += 1;
-    }
-    fn do_turn_unit( &mut self, me : &mut Unit ) {
-        me.stats.ct -= 100;
     }
 }

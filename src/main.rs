@@ -3,8 +3,8 @@
 #[macro_use] extern crate itertools;
 extern crate time;
 
-mod types;
-use types::*;
+mod engine;
+use engine::*;
 
 // Time execution of given function. Expects to receive turns executed
 fn timeit<F>( mut f : F )
@@ -20,7 +20,7 @@ where F : FnMut() -> u32
 }
 
 fn main() {
-    let mut st = State::mk_test();
+    let mut st = State::mk_test( 2, 4, 1.5 );
     st.render();
     st.do_turn();
     st.render();
