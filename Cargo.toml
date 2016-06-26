@@ -8,3 +8,4 @@ description = "Turn based tactical rpg with time travel mechanic"
 [dependencies]
 time = "*"
 rand = "*"
+itertools = "*"
