@@ -21,6 +21,7 @@ impl State {
         }
 
         // Update units and track whether any are alive for each team
+        self.alive = 0;
         for u in &mut self.units {
             u.update();
             if u.is_alive { self.alive |= 1 << (u.team-1); } // maybe move this to unit death handler?
