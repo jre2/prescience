@@ -34,6 +34,7 @@ fn main() {
         }
         st.turn
     });
+    st.render();
 
     let e = Effect::new().init( EffectType::Stop, 5, 2, 0 );
     println!("{:?}", e );

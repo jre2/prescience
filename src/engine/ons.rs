@@ -12,6 +12,8 @@ impl Unit {
     pub fn on_turn( &mut self, st : &mut State ) {
         self.stats.ct -= 100;
 
-        st.units[0].stats.hp -= self.stats.atk;
+        if self.status.contains( & EffectType::Disable ) { return; }
+
+        st.units[0].on_damaged( self.stats.atk );
     }
 }
