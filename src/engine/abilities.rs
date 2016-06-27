@@ -6,6 +6,7 @@ use super::*;
 pub enum AbilityType {
     Attack,
     Heal,
+    Invalid,
 }
 
 // For now, all abilities require a unit as a target. can use trait later

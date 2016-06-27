@@ -114,6 +114,12 @@ impl Unit {
         u.stats.ct = id;
         u
     }
+    fn get_nth_ability( &self, idx : usize ) -> AbilityType {
+        for (i,a) in self.abilities.iter().enumerate() {
+            if i == idx { return a; }
+        }
+        AbilityType::Invalid // impossible
+    }
 }
 impl State {
     pub fn new() -> State {
@@ -150,3 +156,11 @@ impl State {
         st
     }
 }
+
+// random utils
+//use rand::{Rng,random};
+//use rand::distributions::{IndependentSample, Range};
+
+use libc;
+pub fn rnd_range( start: usize, end: usize ) -> usize { unsafe { libc::rand() as usize % end + start } }
+pub fn rnd_range0( end : usize ) -> usize { unsafe { libc::rand() as usize % end } }

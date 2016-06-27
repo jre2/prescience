@@ -1,6 +1,5 @@
 #![allow(unused_variables)]
 use super::*;
-use rand;
 
 impl Unit {
     pub fn on_death( &mut self ) {
@@ -36,18 +35,14 @@ impl Unit {
     }
 }
 
-use rand::distributions::{IndependentSample, Range};
-
 // Light playouts system
 impl Unit {
     pub fn choose_ability_randomly( &mut self ) -> AbilityType {
-        AbilityType::Attack
+        let idx = rnd_range0( self.abilities.len() );
+        self.get_nth_ability( idx )
     }
     pub fn choose_target_unit_randomly<'a>( &'a mut self, st : &'a mut State ) -> &mut Unit {
-        let mut rng = rand::thread_rng();
-        let between = Range::new( 0, st.units.len() );
-        let idx = between.ind_sample(&mut rng);
-
+        let idx = rnd_range0( st.units.len() );
         &mut st.units[ idx ]
     }
     fn on_turn_light_playouts( &mut self, st : &mut State ) {
