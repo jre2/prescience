@@ -13,7 +13,7 @@ mod engine;
 use engine::*;
 
 // Time execution of given function. Expects to receive turns executed
-fn timeit<F>( mut f : F )
+fn timeit<F>( mut f : F ) -> String
 where F : FnMut() -> u32
 {
     let t0 = time::precise_time_ns();
@@ -22,7 +22,7 @@ where F : FnMut() -> u32
     let dt = (t-t0) as f64 / 1e9;
     let tps = ((turns as f64 / dt) / 1000.0) as u32;
 
-    println!("Completed {} turns. {} sec. {} k turns/sec", turns, dt, tps);
+    format!("Completed {} turns. {} sec. {} k turns/sec", turns, dt, tps)
 }
 
 fn main() {
@@ -30,17 +30,13 @@ fn main() {
     st.render();
     st.do_turn();
     st.render();
-    timeit(|| {
+    let s = timeit(|| {
         for _ in 0..9000000 {
             if st.alive == 0 { break; }
             st.do_turn();
         }
         st.turn
     });
-
-    println!("\n");
     st.render();
-
-    let e = Effect::new().init( EffectType::Stop, 5, 2, 0 );
-    println!("{:?}", e );
+    println!( "\n{}", s );
 }
