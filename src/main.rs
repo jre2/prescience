@@ -1,10 +1,13 @@
 #![feature(collections)]
 #![feature(enumset)]
 #![feature(iter_arith)]
+#![feature(libc)]
 
 extern crate collections;
 #[macro_use] extern crate itertools;
 extern crate time;
+extern crate libc;
+extern crate rand;
 
 mod engine;
 use engine::*;
@@ -34,6 +37,8 @@ fn main() {
         }
         st.turn
     });
+
+    println!("\n");
     st.render();
 
     let e = Effect::new().init( EffectType::Stop, 5, 2, 0 );
