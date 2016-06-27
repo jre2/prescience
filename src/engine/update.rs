@@ -1,13 +1,6 @@
 use super::*;
 
-// Update and turn processing functions
-impl Unit {
-    fn update( &mut self ) {
-        if self.is_alive {
-            self.stats.ct += self.stats.spd
-        }
-    }
-}
+// Game tick updates and turn processing
 impl State {
     // run one game tick (a sub-turn/round unit of time).
     // mostly determines when rounds/turns occur
@@ -22,17 +15,7 @@ impl State {
 
         // Update units and track whether any are alive for each team
         self.alive = 0;
-        for u in &mut self.units {
-            u.update();
-            if u.is_alive { self.alive |= 1 << (u.team-1); } // maybe move this to unit death handler?
-        }
-    }
-    fn update_effects( &mut self ) {
-        //TODO: track what unit an effect belongs to via eindex
-        for e in &mut self.effects {
-            e.on_update();
-        }
-        //TODO: remove dead effects, update unit flags, resort, and update eindex
+        self.update_units();
     }
     fn get_next_ready_unit( &mut self ) -> Option< &mut Unit > {
         while self.alive != 0 {
@@ -52,5 +35,42 @@ impl State {
         } };
         u.on_turn( self );
         self.turn += 1;
+    }
+}
+
+// Update units
+impl State {
+    fn update_units( &mut self ) {
+        for u in &mut self.units {
+            u.update();
+            if u.is_alive { self.alive |= 1 << (u.team-1); } // maybe move this to unit death handler?
+        }
+    }
+}
+impl Unit {
+    // runs every game tick (absolute time)
+    fn update( &mut self ) {
+        if self.is_alive {
+            self.stats.ct += self.stats.spd
+        }
+    }
+}
+
+// Update effects
+impl State {
+    fn update_effects( &mut self ) {
+        //TODO: track what unit an effect belongs to via eindex
+        for e in &mut self.effects {
+            e.on_update();
+        }
+        //TODO: remove dead effects, update unit flags, resort, and update eindex
+    }
+}
+
+impl Effect {
+    // runs every game round (absolute time)
+    pub fn on_update( &mut self ) {
+        if self.ttl == 0 { return; }
+        self.ttl -= 1;
     }
 }

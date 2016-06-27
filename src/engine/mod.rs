@@ -138,6 +138,7 @@ impl State {
         let u = Unit::new()
                     .init( self.units.len() as UnitId, team, row );
         self.units.push( u );
+        self.eindex.push( self.effects.len() );
         self
     }
     pub fn mk_test( teams : TeamId, rows : RowId, row_size_mult : f32) -> State {
