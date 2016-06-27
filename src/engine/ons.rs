@@ -11,6 +11,7 @@ impl Unit {
     }
     pub fn on_turn( &mut self, st : &mut State ) {
         self.stats.ct -= 100;
+
         st.units[0].stats.hp -= self.stats.atk;
     }
 }

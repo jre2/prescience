@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+pub use collections::enum_set::*;
 
 // sibling implementation modules
 mod render;
@@ -7,12 +8,15 @@ pub use self::render::*;
 mod ons;
 pub use self::ons::*;
 
-// other modules
+mod effects;
+pub use self::effects::*;
+
+// now we define the basic types and their initialization
 
 pub type UnitId = u8;
 pub type TeamId = u8; // starting from 1
-pub type RowId = u8;
-pub type Stat = u8;
+pub type RowId  = u8;
+pub type Stat   = u8;
 
 #[derive(Debug)]
 pub struct State {
@@ -22,34 +26,36 @@ pub struct State {
 
     pub turn    : u32,      // unit turn count. occurs any time a unit gets 100ct
     pub round   : u32,      // absolute turn count. occurs every absolute 100ct
-    ct          : u8,
+    ct          : u8,       // game tick level ct/spd
     spd         : u8,
 
     pub alive   : u8,       // bitflags for whether team has any members alive
 }
 
-#[derive(Debug)]
-#[derive(Clone)]
+#[derive(Debug,Clone)]
 pub struct Unit {
     pub id          : UnitId,
     team            : TeamId,
     row             : RowId,
     pub is_alive    : bool,
+
+    status          : EnumSet< EffectType >,
     pub stats       : UnitStats,
 }
-#[derive(Debug)]
-#[derive(Clone)]
+
+#[derive(Debug,Clone)]
 pub struct UnitStats {
     pub ct  : u8,
     spd     : u8,
+
     pub hp  : u8,
     atk     : u8,
     heal    : u8,
 }
 
 // Eventually try replacing with u16-32 and manual bitshifting
-#[derive(Debug)]
-struct Effect {
+#[derive(Debug,Clone)]
+pub struct Effect {
     etype   : u8,       // support upto 256 effect types (planning only 64)
     ttl     : u8,       // duration in rounds; 0-14 with 15 => inf
     potency : i8,       // SMT/pokemon style "stages"; +/- 5
@@ -62,13 +68,21 @@ impl UnitStats {
     }
 }
 impl Effect {
-    fn new() -> Effect {
+    pub fn new() -> Effect {
         Effect { etype : 0, ttl : 0, potency : 0, linked : 0 }
+    }
+    pub fn init( &mut self, etype : EffectType, ttl : u8, potency : i8, linked : UnitId ) -> Effect {
+        let mut e = self.clone();
+        e.etype = etype as u8;  // safe for <256 types
+        e.ttl = ttl;
+        e.potency = potency;
+        e.linked = linked;
+        e
     }
 }
 impl Unit {
     fn new() -> Unit {
-        Unit { id : 0, team : 0, row : 0, is_alive : false, stats : UnitStats::new() }
+        Unit { id : 0, team : 0, row : 0, is_alive : false, status : EnumSet::new(), stats : UnitStats::new() }
     }
     fn init( &mut self, id : UnitId, team : TeamId, row : RowId ) -> Unit {
         let mut u = self.clone();
@@ -133,7 +147,7 @@ impl State {
         if self.ct >= 100 {
             self.round += 1;
             self.ct = 0;
-            //TODO: run updates on all effects
+            self.update_effects();
         }
 
         // Update units and track whether any are alive for each team
@@ -141,6 +155,13 @@ impl State {
             u.update();
             if u.is_alive { self.alive |= 1 << (u.team-1); } // maybe move this to unit death handler?
         }
+    }
+    fn update_effects( &mut self ) {
+        //TODO: track what unit an effect belongs to via eindex
+        for e in &mut self.effects {
+            e.on_update();
+        }
+        //TODO: remove dead effects, update unit flags, resort, and update eindex
     }
     fn get_next_ready_unit( &mut self ) -> Option< &mut Unit > {
         while self.alive != 0 {

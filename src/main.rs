@@ -1,5 +1,8 @@
+#![feature(collections)]
+#![feature(enumset)]
 #![feature(iter_arith)]
 
+extern crate collections;
 #[macro_use] extern crate itertools;
 extern crate time;
 
@@ -31,4 +34,7 @@ fn main() {
         }
         st.turn
     });
+
+    let e = Effect::new().init( EffectType::Stop, 5, 2, 0 );
+    println!("{:?}", e );
 }

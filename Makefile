@@ -1,15 +1,20 @@
+RFLAGS=RUSTFLAGS="-C target-cpu=native"
+
 build:
-	@cargo build
+	@$(RFLAGS) cargo build
 
 run:
-	@cargo run --release
+	@$(RFLAGS) cargo run --release
 
 test:
 	@echo "Testing"
-	@cargo test
+	@$(RFLAGS) cargo test
 
 bench:
 	@echo "Benching"
-	@cargo bench
+	@$(RFLAGS) cargo bench
 
-.PHONY: build run test bench
+clean:
+	@cargo clean
+
+.PHONY: build run test bench clean
