@@ -1,29 +1,45 @@
 #![allow(unused_variables)]
 use super::*;
+use std;
 
 impl Unit {
     pub fn on_death( &mut self ) {
         self.is_alive = false;
         //TODO: remove all effects attached to this unit
     }
-    pub fn on_damaged( &mut self, dmg : u8 ) {
-        self.stats.hp -= dmg;
-        if self.stats.hp <= 0 { self.on_death(); }
-    }
-    // returns whether attack hits
+    // cancel attack if fals
     pub fn on_attacked( &mut self, attacker : &mut Unit ) -> bool {
         true
     }
+    pub fn on_healed( &mut self, dmg : u8 ) {
+        self.stats.hp = match self.stats.hp.checked_add( dmg ) {
+            None => std::u8::MAX,
+            Some(hp) => hp,
+        }
+        // cap hp at 100 or allow >100% hp?. allowing overheal for now
+    }
+    pub fn on_damaged( &mut self, dmg : u8 ) {
+        self.stats.hp = match self.stats.hp.checked_sub( dmg ) {
+            None => 0,
+            Some(hp) => hp,
+        };
+        if self.stats.hp <= 0 { self.on_death(); }
+    }
 
 
-    // returns whether attack hits
+    // cancel action if false
+    pub fn on_action( &mut self, at : AbilityType ) -> bool {
+        true
+    }
+    // cancel attack if false
     pub fn on_attack( &mut self, targ : &mut Unit ) -> bool {
         true
     }
     pub fn on_damage( &mut self, targ : &mut Unit ) -> u8 {
         self.stats.atk
     }
-    pub fn on_action( &mut self, at : AbilityType ) {
+    pub fn on_heal( &mut self, targ : &mut Unit ) -> u8 {
+        self.stats.heal
     }
 
 

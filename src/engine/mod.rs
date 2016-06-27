@@ -82,7 +82,7 @@ impl CLike for AbilityType {
 // Creation and initialization
 impl UnitStats {
     fn new() -> UnitStats {
-        UnitStats { ct:0, spd:10, hp:100, atk:20, heal:5 }
+        UnitStats { ct:0, spd:10, hp:100, atk:10, heal:5 }
     }
 }
 impl Effect {
