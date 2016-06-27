@@ -4,8 +4,8 @@ use std;
 
 impl State {
     fn render_team( & self, team : TeamId, rev : bool ) {
-        let rows1 = self.units.iter().filter(|u| u.team==team).map(|u| u.row).unique();
-        let rows = if rev { rows1.sorted() } else { rows1.sorted_by(|a,b| b.cmp(a)) };
+        let rows_ = self.units.iter().filter(|u| u.team==team).map(|u| u.row).unique();
+        let rows = if rev { rows_.sorted() } else { rows_.sorted_by(|a,b| b.cmp(a)) };
         for row in rows {
             let us = self.units.iter().filter(|u| u.team==team && u.row==row);
             let s = us.map(|u| u.to_string() ).join(" ");
