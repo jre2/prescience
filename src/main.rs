@@ -41,4 +41,5 @@ fn main() {
         st.turn
     });
     st.render();
+    println!( "\n{}", s );
 }
