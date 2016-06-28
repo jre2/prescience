@@ -45,7 +45,7 @@ impl Unit {
 
     pub fn on_turn( &mut self, st : &mut State ) {
         self.stats.ct -= 100;
-        if self.status.contains( & EffectType::Disable ) { return; }
+        if self.status.has( EffectSet::PREVENT_ACTION ) { return; }
 
         self.on_turn_light_playouts( st );
     }

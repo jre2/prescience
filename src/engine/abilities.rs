@@ -1,12 +1,26 @@
-#![allow(unused_variables)]
 use super::*;
+use self::AbilityType::*;
+
+macro_rules! mkes {
+    ( $( $x:expr ), * ) => {
+        {
+            ($( ( 1 << ($x as usize) ) + )*  0)
+        }
+    };
+}
 
 #[derive(Debug,Clone,Copy)]
 #[repr(usize)]
 pub enum AbilityType {
+    Invalid,
     Attack,
     Heal,
-    Invalid,
+    DoubleAttack,
+}
+
+pub trait AbilityGroups {
+    const ALL : usize = mkes![ Attack, Heal, DoubleAttack ];
+    const BASIC : usize = mkes![ Attack, Heal ];
 }
 
 // For now, all abilities require a unit as a target. can use trait later

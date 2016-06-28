@@ -24,6 +24,8 @@ pub type UnitId = u8;
 pub type TeamId = u8; // starting from 1
 pub type RowId  = u8;
 pub type Stat   = u8;
+pub type AbilitySet = EnumSet< AbilityType >;
+pub type EffectSet = EnumSet< EffectType >;
 
 #[derive(Debug)]
 pub struct State {
@@ -51,8 +53,8 @@ pub struct Unit {
     row             : RowId,
     pub is_alive    : bool,
 
-    status          : EnumSet< EffectType >,
-    abilities       : EnumSet< AbilityType >,
+    status          : EffectSet,
+    abilities       : AbilitySet,
     pub stats       : UnitStats,
 }
 
@@ -76,6 +78,7 @@ pub struct Effect {
     owner   : UnitId,   // temporary field for initial easy implementation
 }
 
+// Utility for Effect/Ability bitflags
 impl CLike for EffectType {
     fn to_usize( &self ) -> usize { *self as usize }
     fn from_usize( v: usize ) -> EffectType { unsafe { mem::transmute(v) } }
@@ -84,6 +87,22 @@ impl CLike for AbilityType {
     fn to_usize( &self ) -> usize { *self as usize }
     fn from_usize( v: usize ) -> AbilityType { unsafe { mem::transmute(v) } }
 }
+
+pub trait EnumSetInt {
+    fn load( v: usize ) -> Self;
+    fn has( &self, v: usize ) -> bool;
+}
+impl<T> EnumSetInt for EnumSet<T> {
+    fn load( v: usize ) -> EnumSet<T> { unsafe { mem::transmute(v) } }
+    fn has( &self, v: usize ) -> bool {
+        let bits : usize = unsafe { mem::transmute( *self ) };
+        (bits & v) != 0
+    }
+}
+
+// These are defined in abilities/effects mods
+impl AbilityGroups  for AbilitySet {}
+impl EffectGroups   for EffectSet {}
 
 // Creation and initialization
 impl UnitStats {
@@ -116,8 +135,7 @@ impl Unit {
         u.team = team;
         u.row = row;
         u.is_alive = true;
-        u.abilities.insert( AbilityType::Attack );
-        u.abilities.insert( AbilityType::Heal );
+        u.abilities = AbilitySet::load( AbilitySet::BASIC );
         u.stats.ct = id;
         u
     }
@@ -159,7 +177,6 @@ impl State {
         let u = Unit::new()
                     .init( self.units.len() as UnitId, team, row );
         self.units.push( u );
-        //self.eindex.push( self.effects.len() );
         self
     }
 }

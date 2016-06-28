@@ -1,4 +1,6 @@
+#![feature(associated_consts)]
 #![feature(collections)]
+#![feature(custom_derive)]
 #![feature(enumset)]
 #![feature(iter_arith)]
 #![feature(libc)]
@@ -39,5 +41,4 @@ fn main() {
         st.turn
     });
     st.render();
-    println!( "\n{}", s );
 }
