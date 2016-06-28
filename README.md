@@ -1,6 +1,9 @@
 # Prescience
 A turn based tactical rpg with time travel mechanics
 
+###### TODO
+* units need to lookup their effects (for potency and linked unit)
+
 # Requirements
 ##### Unit actions
 * apply/remove instaneous effects to self or other units

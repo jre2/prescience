@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-pub use collections::enum_set::*;
+pub use collections::enum_set::{EnumSet,CLike};
 use std::mem;
 
 // sibling implementation modules
@@ -28,8 +28,7 @@ pub type Stat   = u8;
 #[derive(Debug)]
 pub struct State {
     units   : Vec<Unit>,    // unit.id = index in units array
-    effects : Vec<Effect>,  // sorted by unit they belong to
-    eindex  : Vec<usize>,   // eindex[unit.id] stores index of unit's first effect
+    effects : EffectStorage,
 
     pub turn    : u32,      // unit turn count. occurs any time a unit gets 100ct
     pub round   : u32,      // absolute turn count. occurs every absolute 100ct
@@ -37,6 +36,12 @@ pub struct State {
     spd         : u8,
 
     pub alive   : u8,       // bitflags for whether team has any members alive
+}
+
+#[derive(Debug)]
+pub struct EffectStorage {
+    pub effects : Vec<Effect>,  // sorted by unit they belong to
+    pub eindex  : Vec<usize>,   // eindex[unit.id] stores index of unit's first effect
 }
 
 #[derive(Debug,Clone)]
@@ -68,6 +73,7 @@ pub struct Effect {
     ttl     : u8,       // duration in rounds; 0-14 with 15 => inf
     potency : i8,       // SMT/pokemon style "stages"; +/- 5
     linked  : UnitId,   // unit id (and thus index). ideally larger later
+    owner   : UnitId,   // temporary field for initial easy implementation
 }
 
 impl CLike for EffectType {
@@ -87,14 +93,15 @@ impl UnitStats {
 }
 impl Effect {
     pub fn new() -> Effect {
-        Effect { etype : 0, ttl : 0, potency : 0, linked : 0 }
+        Effect { etype : 0, ttl : 0, potency : 0, linked : 0, owner : 0 }
     }
-    pub fn init( &mut self, etype : EffectType, ttl : u8, potency : i8, linked : UnitId ) -> Effect {
+    pub fn init( &mut self, etype : EffectType, ttl : u8, potency : i8, linked : UnitId, owner : UnitId ) -> Effect {
         let mut e = self.clone();
         e.etype = etype as u8;  // safe for <256 types
         e.ttl = ttl;
         e.potency = potency;
         e.linked = linked;
+        e.owner = owner;
         e
     }
 }
@@ -125,21 +132,13 @@ impl State {
     pub fn new() -> State {
         State {
             units   : Vec::new(),
-            effects : Vec::new(),
-            eindex  : Vec::new(),
+            effects : EffectStorage::new(),
             turn    : 0,
             round   : 0,
             ct      : 0,
             spd     : 10, // default speed is 10 ticks per round
             alive   : 1,
         }
-    }
-    pub fn add_unit( &mut self, team : TeamId, row : RowId ) -> &mut State {
-        let u = Unit::new()
-                    .init( self.units.len() as UnitId, team, row );
-        self.units.push( u );
-        self.eindex.push( self.effects.len() );
-        self
     }
     pub fn mk_test( teams : TeamId, rows : RowId, row_size_mult : f32) -> State {
         let mut st = State::new();
@@ -156,6 +155,45 @@ impl State {
         }
         st
     }
+    pub fn add_unit( &mut self, team : TeamId, row : RowId ) -> &mut State {
+        let u = Unit::new()
+                    .init( self.units.len() as UnitId, team, row );
+        self.units.push( u );
+        //self.eindex.push( self.effects.len() );
+        self
+    }
+}
+
+// Initial implementation is flat array that must be filtered
+// elements with type=0 should be ignored
+impl EffectStorage {
+    pub fn new() -> EffectStorage {
+        EffectStorage {
+            effects : Vec::new(),
+            eindex  : Vec::new(),
+        }
+    }
+
+    pub fn add_effect( &mut self, e: Effect, _owner: UnitId ) {
+        self.effects.push( e );
+    }
+    pub fn rem_effects_by_owner( &mut self, owner: UnitId ) {
+        for e in &mut self.effects {
+            if e.owner == owner {
+                e.etype = EffectType::Invalid as u8;
+            }
+        }
+        //println!("Removed effects for unit {}", owner);
+    }
+    /*
+    // Finds first. ideally would return iterator of all matches though
+    pub fn lookup_by_owner_type( &self, owner: UnitId, etype: EffectType ) -> & Effect {
+        self.effects.iter().find(|e| e.owner == owner && e.etype == etype as u8 ).unwrap()
+    }
+    pub fn rem_effect( &mut self, idx : usize ) {
+        self.effects[ idx ].etype = EffectType::Invalid as u8;
+    }
+    */
 }
 
 // random utils

@@ -59,18 +59,23 @@ impl Unit {
 // Update effects
 impl State {
     fn update_effects( &mut self ) {
-        //TODO: track what unit an effect belongs to via eindex
-        for e in &mut self.effects {
-            e.on_update();
+        // implementation specific, won't work for fast version
+        for uid in 0..self.units.len() {
+            for e in &mut self.effects.effects.iter_mut().filter(|x| x.owner == uid as u8) {
+                if e.on_update() {
+                    let et = EffectType::from_usize( e.etype as usize );
+                    self.units[uid].status.remove( & et );
+                }
+            }
         }
-        //TODO: remove dead effects, update unit flags, resort, and update eindex
     }
 }
 
 impl Effect {
-    // runs every game round (absolute time)
-    pub fn on_update( &mut self ) {
-        if self.ttl == 0 { return; }
+    // runs every game round (absolute time). return if removed
+    pub fn on_update( &mut self ) -> bool {
+        if self.ttl == 0 { self.etype = EffectType::Invalid as u8; return true; }
         self.ttl -= 1;
+        false
     }
 }

@@ -3,9 +3,9 @@ use super::*;
 use std;
 
 impl Unit {
-    pub fn on_death( &mut self ) {
+    pub fn on_death( &mut self, st : &mut State ) {
         self.is_alive = false;
-        //TODO: remove all effects attached to this unit
+        st.effects.rem_effects_by_owner( self.id );
     }
     // cancel attack if fals
     pub fn on_attacked( &mut self, attacker : &mut Unit ) -> bool {
@@ -18,12 +18,12 @@ impl Unit {
         }
         // cap hp at 100 or allow >100% hp?. allowing overheal for now
     }
-    pub fn on_damaged( &mut self, dmg : u8 ) {
+    pub fn on_damaged( &mut self, st : &mut State, dmg : u8 ) {
         self.stats.hp = match self.stats.hp.checked_sub( dmg ) {
             None => 0,
             Some(hp) => hp,
         };
-        if self.stats.hp <= 0 { self.on_death(); }
+        if self.stats.hp <= 0 && self.is_alive { self.on_death( st ); }
     }
 
 

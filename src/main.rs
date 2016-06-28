@@ -2,6 +2,7 @@
 #![feature(enumset)]
 #![feature(iter_arith)]
 #![feature(libc)]
+#![feature(unboxed_closures)]
 
 extern crate collections;
 #[macro_use] extern crate itertools;

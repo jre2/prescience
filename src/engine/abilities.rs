@@ -20,7 +20,7 @@ impl Unit {
                 if !u.on_attacked( self ) { return; }
 
                 let dmg = self.on_damage( u );
-                u.on_damaged( dmg );
+                u.on_damaged( st, dmg );
                 },
 
             AbilityType::Heal => {
