@@ -10,6 +10,7 @@ pub enum EffectType {
 }
 
 pub trait EffectGroups {
+    group!(PREVENT_CT; Sleep);
     group!(PREVENT_ACTION; Sleep, Stun, Petrify);
 }
 
