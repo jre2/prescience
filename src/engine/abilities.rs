@@ -29,6 +29,7 @@ impl Unit {
             },
             Sleep => {
                 st.effects.add_effect( t, EffectType::Sleep, 10, 0, 0 );
+                t.stats.ct = 0;
             },
             _ => panic!("Ability not implemented"),
         }
