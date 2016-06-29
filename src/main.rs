@@ -28,6 +28,13 @@ where F : FnMut() -> u32
     format!("Completed {} turns. {} sec. {} k turns/sec", turns, dt, tps)
 }
 
+fn _debug_effects( st: &mut State ) {
+    println!( "# effects {}", st.effects.effects.len() );
+    st.effects.defrag();
+    println!( "# effects {}", st.effects.effects.len() );
+    println!( "{:?}", st.effects.effects );
+}
+
 fn main() {
     let mut st = State::mk_test( 2, 4, 1.5 );
     st.render();
@@ -42,4 +49,5 @@ fn main() {
     });
     st.render();
     println!( "\n{}", s );
+    _debug_effects( &mut st );
 }
