@@ -36,7 +36,9 @@ impl Unit {
         true
     }
     pub fn on_damage( &mut self, targ : &mut Unit ) -> u8 {
-        self.stats.atk
+        let dist_f = 2.0 / (self.row + targ.row) as f32;
+        let dmg = (self.stats.atk as f32 * dist_f) as u8;
+        dmg
     }
     pub fn on_heal( &mut self, targ : &mut Unit ) -> u8 {
         self.stats.heal
@@ -45,7 +47,7 @@ impl Unit {
 
     pub fn on_turn( &mut self, st : &mut State ) {
         self.stats.ct -= 100;
-        if self.status.has( EffectSet::PREVENT_ACTION ) { return; }
+        if self.effects.has( EffectSet::PREVENT_ACTION ) { return; }
 
         self.on_turn_light_playouts( st );
     }

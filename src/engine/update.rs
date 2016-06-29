@@ -60,21 +60,25 @@ impl Unit {
 impl State {
     fn update_effects( &mut self ) {
         // implementation specific, won't work for fast version
+        self.effects.holes = 0;
         for uid in 0..self.units.len() {
             for e in &mut self.effects.effects.iter_mut().filter(|x| x.owner == uid as u8) {
                 if e.on_update() {
+                    self.effects.holes += 1;
                     let et = EffectType::from_usize( e.etype as usize );
-                    self.units[uid].status.remove( & et );
+                    self.units[uid].effects.remove( & et );
                 }
             }
         }
+        self.effects.defrag();
     }
 }
 
 impl Effect {
     // runs every game round (absolute time). return if removed
     pub fn on_update( &mut self ) -> bool {
-        if self.ttl == 0 { self.etype = EffectType::Invalid as u8; return true; }
+        //if self.ttl == 0 { self.etype = EffectType::Invalid as u8; return true; }
+        if self.ttl == 0 || self.etype == EffectType::Invalid as u8 { return true; }
         self.ttl -= 1;
         false
     }

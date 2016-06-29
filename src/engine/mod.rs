@@ -48,6 +48,7 @@ pub struct State {
 pub struct EffectStorage {
     pub effects : Vec<Effect>,  // sorted by unit they belong to
     pub eindex  : Vec<usize>,   // eindex[unit.id] stores index of unit's first effect
+    holes       : usize,
 }
 
 #[derive(Debug,Clone)]
@@ -57,7 +58,7 @@ pub struct Unit {
     row             : RowId,
     pub is_alive    : bool,
 
-    status          : EffectSet,
+    effects         : EffectSet,
     abilities       : AbilitySet,
     pub stats       : UnitStats,
 }
@@ -131,7 +132,7 @@ impl Effect {
 impl Unit {
     fn new() -> Unit {
         Unit { id : 0, team : 0, row : 0, is_alive : false,
-            status : EnumSet::new(), abilities : EnumSet::new(), stats : UnitStats::new() }
+            effects : EnumSet::new(), abilities : EnumSet::new(), stats : UnitStats::new() }
     }
     fn init( &mut self, id : UnitId, team : TeamId, row : RowId ) -> Unit {
         let mut u = self.clone();
@@ -192,10 +193,12 @@ impl EffectStorage {
         EffectStorage {
             effects : Vec::new(),
             eindex  : Vec::new(),
+            holes   : 0,
         }
     }
 
-    pub fn add_effect( &mut self, e: Effect, _owner: UnitId ) {
+    pub fn add_effect( &mut self, u: & Unit, et: EffectType, ttl: u8, potency: i8, linked: UnitId ) {
+        let e = Effect { etype: et as u8, ttl:ttl, potency:potency, linked:linked, owner:u.id };
         self.effects.push( e );
     }
     pub fn rem_effects_by_owner( &mut self, owner: UnitId ) {
@@ -204,7 +207,9 @@ impl EffectStorage {
                 e.etype = EffectType::Invalid as u8;
             }
         }
-        //println!("Removed effects for unit {}", owner);
+    }
+    pub fn defrag( &mut self ) {
+        self.effects.retain(|e| e.ttl != 0 && e.etype != 0 );
     }
     /*
     // Finds first. ideally would return iterator of all matches though

@@ -1,7 +1,6 @@
 use super::*;
 use self::EffectType::*;
 
-
 #[derive(Debug,Clone,Copy)]
 #[repr(usize)]
 pub enum EffectType {
@@ -13,3 +12,5 @@ pub enum EffectType {
 pub trait EffectGroups {
     group!(PREVENT_ACTION; Sleep, Stun, Petrify);
 }
+
+impl Effect {}
