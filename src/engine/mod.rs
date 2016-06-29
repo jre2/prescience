@@ -33,8 +33,8 @@ pub type EffectSet = EnumSet< EffectType >;
 
 #[derive(Debug)]
 pub struct State {
-    units   : Vec<Unit>,    // unit.id = index in units array
-    effects : EffectStorage,
+    pub units   : Vec<Unit>,    // unit.id = index in units array
+    pub effects : EffectStorage,
 
     pub turn    : u32,      // unit turn count. occurs any time a unit gets 100ct
     pub round   : u32,      // absolute turn count. occurs every absolute 100ct
@@ -58,8 +58,8 @@ pub struct Unit {
     row             : RowId,
     pub is_alive    : bool,
 
-    effects         : EffectSet,
-    abilities       : AbilitySet,
+    pub effects     : EffectSet,
+    pub abilities   : AbilitySet,
     pub stats       : UnitStats,
 }
 
@@ -96,10 +96,16 @@ impl CLike for AbilityType {
 pub trait EnumSetInt {
     fn load( v: usize ) -> Self;
     fn has( &self, v: usize ) -> bool;
+    fn has1<E: CLike>( &self, et: E ) -> bool;
 }
 impl<T> EnumSetInt for EnumSet<T> {
     fn load( v: usize ) -> EnumSet<T> { unsafe { mem::transmute(v) } }
     fn has( &self, v: usize ) -> bool {
+        let bits : usize = unsafe { mem::transmute( *self ) };
+        (bits & v) != 0
+    }
+    fn has1<E: CLike>( &self, et: E ) -> bool {
+        let v = 1 << et.to_usize();
         let bits : usize = unsafe { mem::transmute( *self ) };
         (bits & v) != 0
     }
@@ -197,9 +203,10 @@ impl EffectStorage {
         }
     }
 
-    pub fn add_effect( &mut self, u: & Unit, et: EffectType, ttl: u8, potency: i8, linked: UnitId ) {
+    pub fn add_effect( &mut self, u: &mut Unit, et: EffectType, ttl: u8, potency: i8, linked: UnitId ) {
         let e = Effect { etype: et as u8, ttl:ttl, potency:potency, linked:linked, owner:u.id };
         self.effects.push( e );
+        u.effects.insert( et );
     }
     pub fn rem_effects_by_owner( &mut self, owner: UnitId ) {
         for e in &mut self.effects {
@@ -209,7 +216,7 @@ impl EffectStorage {
         }
     }
     pub fn defrag( &mut self ) {
-        self.effects.retain(|e| e.ttl != 0 && e.etype != 0 );
+        self.effects.retain(|e| e.etype != 0 && e.ttl > 0 );
     }
     /*
     // Finds first. ideally would return iterator of all matches though
