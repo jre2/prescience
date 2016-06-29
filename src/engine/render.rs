@@ -40,6 +40,7 @@ impl State {
 impl std::fmt::Display for Unit {
     fn fmt( &self, f: &mut std::fmt::Formatter ) -> std::fmt::Result {
         if !self.is_alive { write!( f, "<DEAD>" ) }
+        else if self.effects.has1( EffectType::Sleep ) { write!( f, "<{}% zzz ({})>", self.stats.hp, self.id ) }
         else { write!( f, "<{}% {} ({})>", self.stats.hp, self.stats.ct, self.id ) }
     }
 }
