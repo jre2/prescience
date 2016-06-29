@@ -3,6 +3,10 @@ pub use collections::enum_set::{EnumSet,CLike};
 use std::mem;
 
 // sibling implementation modules
+#[macro_use]
+mod macros;
+pub use self::macros::*;
+
 mod render;
 pub use self::render::*;
 
