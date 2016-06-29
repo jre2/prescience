@@ -4,7 +4,7 @@ use super::*;
 impl State {
     // run one game tick (a sub-turn/round unit of time).
     // mostly determines when rounds/turns occur
-    fn update( &mut self ) {
+    pub fn update( &mut self ) {
         // Update absolute time (rounds) and update effects if new round occurs
         self.ct += self.spd;
         if self.ct >= 100 {
@@ -51,6 +51,7 @@ impl Unit {
     // runs every game tick (absolute time)
     fn update( &mut self ) {
         if self.is_alive {
+            if self.effects.has( EffectSet::PREVENT_CT ) { return; }
             self.stats.ct += self.stats.spd
         }
     }
@@ -77,9 +78,10 @@ impl State {
 impl Effect {
     // runs every game round (absolute time). return if removed
     pub fn on_update( &mut self ) -> bool {
-        //if self.ttl == 0 { self.etype = EffectType::Invalid as u8; return true; }
         if self.ttl == 0 || self.etype == EffectType::Invalid as u8 { return true; }
         self.ttl -= 1;
+        // temp hack to handle bad defrag
+        if self.ttl == 0 || self.etype == EffectType::Invalid as u8 { return true; }
         false
     }
 }
